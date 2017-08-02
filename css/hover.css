@@ -1,0 +1,37 @@
+
+.type-wrap{
+    color:white;
+    font-family: "Ubuntu", sans-serif;
+    font-weight: bold;
+    font-size: 45px;
+    
+    position:absolute;
+    text-align: center;
+    
+    top: 300px;
+    left: 300px;
+    right: 300px;
+}
+
+.typed-cursor{
+    opacity: 1;
+    animation: typedjsBlink 0.6s infinite;
+    -webkit-animation: typedjsBlink 0.6s infinite;
+    animation: typedjsBlink 0.6s infinite;
+}
+@keyframes typedjsBlink{
+    50% { opacity: 0.0; }
+}
+@-webkit-keyframes typedjsBlink{
+    0% { opacity: 1; }
+    50% { opacity: 0.0; }
+    100% { opacity: 1; }
+}
+      
+.typed-fade-out{
+    opacity: 0;
+    transition: opacity .25s;
+    -webkit-animation: 0;
+    animation: 0;
+}
+      
