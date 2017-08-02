@@ -13,6 +13,17 @@
     right: 300px;
 }
 
+a{
+    color: #4CAF50;
+}
+
+.music{
+    position: absolute;
+    top: 300px;
+    left: 300px;
+    right: 300px;
+}
+
 .typed-cursor{
     opacity: 1;
     animation: typedjsBlink 0.6s infinite;
