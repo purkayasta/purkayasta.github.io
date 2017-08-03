@@ -27,12 +27,20 @@ li{list-style:none}
 html,body{ 
 	width:100%;
 	height:100%;
-	background:#111;
+  background:#111;
+  /* Color Changing Animation  */
+  /* -webkit-animation: color-animation 10s infinite; 
+  animation: 10s infinite color-animation; */
 }
-
-html{
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
+/* 
+@keyframes color-animation {        
+    0%   {background: #000000;}            
+    20%  {background: #4A148C;}           
+    30%  {background: #004D40;}      
+    40%  {background: #1A237E;}      
+    70%  {background: #212121;}
+    100% {background: #000000;}
+} */
 
 body{
   font:normal 75% Arial, Helvetica, sans-serif;
@@ -88,7 +96,7 @@ canvas{
 #particles-js{
   width: 100%;
   height: 100%;
-  background-color:  #000000;
+  background-color: #000000;
   background-image: url('');
   background-size: cover;
   background-position: 50% 50%;
