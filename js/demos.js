@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
   var typed = new Typed('#typed', {
     stringsElement: '#typed-strings',
-    typeSpeed: 60,
-    backSpeed: 60,
-    startDelay: 1000,
+    typeSpeed: 90,
+    backSpeed: 90,
+    startDelay: 1500,
     endDelay: 1000,
     loop: true,
     loopCount: Infinity,
