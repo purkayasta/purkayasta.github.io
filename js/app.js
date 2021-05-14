@@ -1,122 +1,64 @@
+const about = document.querySelector("#about");
+const contact = document.querySelector("#contact");
+const resume = document.querySelector("#resume");
+const aboutContent = document.querySelector("#about-content");
+const contactContent = document.querySelector("#contact-content");
+const resumeContent = document.querySelector("#resume-content");
 
-
-particlesJS('particles-js',
-  
-  {
-    "particles": {
-      "number": {
-        "value": 110,
-        "density": {
-          "enable": true,
-          "value_area": 400
-        }
-      },
-      "color": {
-        "value": "#000000"
-      },
-      "shape": {
-        "type": "circle",
-        "stroke": {
-          "width": 5,
-          "color": "#F57F17"
-        },
-        "polygon": {
-          "nb_sides": 9
-        },
-        "image": {
-          "src": "img/github.svg",
-          "width": 100,
-          "height": 100
-        }
-      },
-      "opacity": {
-        "value": 2,
-        "random": true,
-        "anim": {
-          "enable": false,
-          "speed": 0.5,
-          "opacity_min": 1,
-          "sync": true
-        }
-      },
-      "size": {
-        "value": 1,
-        "random": true,
-        "anim": {
-          "enable": true,
-          "speed": 3,
-          "size_min": 0.5,
-          "sync": true
-        }
-      },
-      "line_linked": {
-        "enable": true,
-        "distance": 100,
-        "color": "#ffffff",
-        "opacity": 0.3,
-        "width": 1
-      },
-      "move": {
-        "enable": true,
-        "speed": 0.4,
-        "direction": "none",
-        "random": true,
-        "straight": false,
-        "out_mode": "out",
-        "attract": {
-          "enable": true,
-          "rotateX": 250,
-          "rotateY": 250
-        }
-      }
+about.addEventListener("click", () => {
+  const aboutBox = new WinBox({
+    title: "About Me",
+    width: "450px",
+    height: "500px",
+    top: 50,
+    right: 50,
+    bottom: 50,
+    left: 50,
+    mount: aboutContent,
+    onfocus: function () {
+      this.setBackground("darkred");
     },
-    "interactivity": {
-      "detect_on": "canvas",
-      "events": {
-        "onhover": {
-          "enable": true,
-          "mode": "grab"
-        },
-        "onclick": {
-          "enable": true,
-          "mode": "push"
-        },
-        "resize": true
-      },
-      "modes": {
-        "grab": {
-          "distance": 100,
-          "line_linked": {
-            "opacity": 2
-          }
-        },
-        "bubble": {
-          "distance": 100,
-          "size": 30,
-          "duration": 2,
-          "opacity": 8,
-          "speed": 3
-        },
-        "repulse": {
-          "distance": 100
-        },
-        "push": {
-          "particles_nb": 1
-        },
-        "remove": {
-          "particles_nb": 2
-        }
-      }
+    onblur: function () {
+      this.setBackground("#777");
     },
-    "retina_detect": true,
-    "config_demo": {
-      "hide_card": true,
-      "background_color": " #4caf50",
-      "background_image": "",
-      "background_position": "50% 50%",
-      "background_repeat": "no-repeat",
-      "background_size": "cover"
-    }
-  }
+  });
+});
 
-);
+contact.addEventListener("click", () => {
+  const contactBox = new WinBox({
+    title: "Contact Me",
+    width: "350px",
+    height: "200px",
+    top: 150,
+    right: 50,
+    bottom: 50,
+    left: 250,
+    mount: contactContent,
+    onfocus: function () {
+      this.setBackground("darkgreen");
+    },
+    onblur: function () {
+      this.setBackground("#777");
+    },
+  });
+});
+
+resume.addEventListener("click", () => {
+  const resumeWinBox = new WinBox({
+    title: "Resume",
+    modal: true,
+    width: "70%",
+    height: "90%",
+    top: 50,
+    right: 50,
+    bottom: 50,
+    left: 50,
+    mount: resumeContent,
+    onfocus: function () {
+      this.setBackground("darkblue");
+    },
+    onblur: function () {
+      this.setBackground("#777");
+    },
+  });
+});

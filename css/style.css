@@ -1,104 +1,102 @@
-/* =============================================================================
-   HTML5 CSS Reset Minified - Eric Meyer
-   ========================================================================== */
-
-html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,q,samp,small,strong,sub,sup,var,b,i,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,figcaption,figure,footer,header,hgroup,menu,nav,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}
-body{line-height:1}
-article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}
-nav ul{list-style:none}
-blockquote,q{quotes:none}
-blockquote:before,blockquote:after,q:before,q:after{content:none}
-a{margin:0;padding:0;font-size:100%;vertical-align:baseline;background:transparent;text-decoration:none}
-mark{background-color:#ff9;color:#000;font-style:italic;font-weight:bold}
-del{text-decoration:line-through}
-abbr[title],dfn[title]{border-bottom:1px dotted;cursor:help}
-table{border-collapse:collapse;border-spacing:0}
-hr{display:block;height:1px;border:0;border-top:1px solid #ccc;margin:1em 0;padding:0}
-input,select{vertical-align:middle}
-li{list-style:none}
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Ubuntu&display=swap");
 
 
-/* =============================================================================
-   My CSS
-   ========================================================================== */
-
-/* ---- base ---- */
-
-html,body{ 
-	width:100%;
-	height:100%;
-  background:#111;
-  /* Color Changing Animation  */
-  /* -webkit-animation: color-animation 10s infinite; 
-  animation: 10s infinite color-animation; */
-}
-/* 
-@keyframes color-animation {        
-    0%   {background: #000000;}            
-    20%  {background: #4A148C;}           
-    30%  {background: #004D40;}      
-    40%  {background: #1A237E;}      
-    70%  {background: #212121;}
-    100% {background: #000000;}
-} */
-
-body{
-  font:normal 75% Arial, Helvetica, sans-serif;
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
-canvas{
-  display:block;
-  vertical-align:bottom;
+:root {
+  --text-color: #a9b318;
 }
 
-
-/* ---- stats.js ---- */
-
-.count-particles{
-  background: #000022;
-  position: absolute;
-  top: 48px;
-  left: 0;
-  width: 80px;
-  color: #4caf50;
-  font-size: .8em;
-  text-align: left;
-  text-indent: 4px;
-  line-height: 14px;
-  padding-bottom: 2px;
-  font-family: Helvetica, Arial, sans-serif;
-  font-weight: bold;
+.monospace-font {
+  font-family: "IBM Plex Mono", monospace;
 }
 
-.js-count-particles{
-  font-size: 1.1em;
+body {
+  font-family: "Ubuntu", sans-serif;
+  background-color: rgb(252, 252, 252);
+  color: rgb(0, 0, 0);
+  font-size: 18px;
+  line-height: 1.8;
 }
 
-#stats,
-.count-particles{
-  -webkit-user-select: none;
-  margin-top: 5px;
-  margin-left: 5px;
+h1 {
+  color: var(--text-color);
+  font-size: 70px;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
 }
 
-#stats{
-  border-radius: 3px 3px 0 0;
-  overflow: hidden;
+h2 {
+  color: var(--text-color);
 }
 
-.count-particles{
-  border-radius: 0 0 3px 3px;
+h3 {
+  margin-bottom: 10px;
 }
 
+ul {
+  list-style-type: none;
+}
 
-/* ---- particles.js container ---- */
+a {
+  color: rgb(209, 74, 12);
+  text-decoration: none;
+}
 
-#particles-js{
-  width: 100%;
-  height: 100%;
-  background-color: #000000;
-  background-image: url('');
-  background-size: cover;
-  background-position: 50% 50%;
-  background-repeat: no-repeat;
+p {
+  margin: 20px 0;
+}
+
+nav {
+  width: 30%;
+}
+
+nav ul {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+nav ul li {
+  padding: 20px;
+  color: rgb(176, 9, 218);
+  cursor: pointer;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.wb-body {
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+.cursor {
+  font-weight: 700;
+  animation: 1s blink step-end infinite;
+}
+
+@keyframes blink {
+  from,
+  to {
+    color: transparent;
+  }
+
+  50% {
+    color: var(--text-color);
+  }
 }
