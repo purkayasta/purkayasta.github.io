@@ -1,9 +1,10 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { contact } from '../data/portfolio'
 
 export function Contact() {
   return (
-    <motion.section
+    <m.section
+      id="contact"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: 0.5 }}
@@ -14,20 +15,15 @@ export function Contact() {
       <p className="mt-3 text-[var(--ink-soft)]">
         Always happy to talk about interesting problems or new opportunities.
       </p>
-      <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
-        <a href={`mailto:${contact.email}`} className="underline underline-offset-4">
-          {contact.email}
-        </a>
-        <a href={contact.github} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-          GitHub
-        </a>
-        <a href={contact.linkedin} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-          LinkedIn
-        </a>
-      </div>
+      <a
+        href={contact.email}
+        className="mt-6 inline-block text-sm underline decoration-[var(--ink-soft)]/40 underline-offset-4 transition-colors hover:decoration-[var(--accent)]"
+      >
+        {contact.email.replace('mailto:', '')}
+      </a>
       <p className="mt-16 text-xs text-[var(--ink-soft)]/70">
-        © {new Date().getFullYear()} Pritom Sunny Purkayasta
+        © {new Date().getFullYear()} Pritom Purkayasta
       </p>
-    </motion.section>
+    </m.section>
   )
 }
