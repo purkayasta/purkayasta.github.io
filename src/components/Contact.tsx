@@ -11,7 +11,7 @@ export function Contact() {
       transition={{ duration: 0.8 }}
       className="mx-auto max-w-2xl px-6 py-24 text-center"
     >
-      <h2 className="text-3xl font-semibold tracking-tight">Get in touch</h2>
+      <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Get in touch</h2>
       <p className="mt-3 text-[var(--ink-soft)]">
         Always happy to talk about interesting problems or new opportunities.
       </p>

@@ -108,7 +108,7 @@ export function Skills() {
   return (
     <>
       <section id="skills" className="mx-auto max-w-2xl px-6 py-16">
-        <h2 className="text-center text-3xl font-semibold tracking-tight">Skills</h2>
+        <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Skills</h2>
 
         <div className="mt-10 space-y-7">
           {skills.map((group, i) => (
@@ -142,7 +142,7 @@ export function Skills() {
       </section>
 
       <section id="certifications" className="mx-auto max-w-2xl px-6 py-16">
-        <h2 className="text-center text-3xl font-semibold tracking-tight">Certifications</h2>
+        <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Certifications</h2>
         <ul className="mt-8 space-y-2 text-center text-sm text-[var(--ink-soft)]">
           {certifications.map((cert) => (
             <li key={cert.title}>
@@ -160,12 +160,12 @@ export function Skills() {
       </section>
 
       <section id="languages" className="mx-auto max-w-2xl px-6 py-16">
-        <h2 className="text-center text-3xl font-semibold tracking-tight">Languages</h2>
+        <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Languages</h2>
         <p className="mt-8 text-center text-sm text-[var(--ink-soft)]">{languages.join(' · ')}</p>
       </section>
 
       <section id="publication" className="mx-auto max-w-2xl px-6 py-16">
-        <h2 className="text-center text-3xl font-semibold tracking-tight">Publication</h2>
+        <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Publication</h2>
         <p className="mt-8 text-center text-sm text-[var(--ink-soft)]">
           <a
             href={publication.link}

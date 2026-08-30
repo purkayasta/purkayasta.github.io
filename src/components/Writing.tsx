@@ -4,7 +4,7 @@ import { writing, contact } from '../data/portfolio'
 export function Writing() {
   return (
     <section id="writing" className="w-full px-6 py-16 sm:px-10">
-      <h2 className="text-center text-3xl font-semibold tracking-tight">Writing</h2>
+      <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Writing</h2>
       <p className="mx-auto mt-3 max-w-xl text-center text-sm text-[var(--ink-soft)]">
         Notes on Linux internals, distributed systems, and the engineering around AI models.
       </p>
@@ -20,7 +20,7 @@ export function Writing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.55, delay: i * 0.07 }}
-            className="glass flex min-h-[170px] flex-col rounded-2xl p-5 shadow-[0_14px_34px_-16px_rgba(12,32,50,0.45)] transition-all hover:-translate-y-1 hover:shadow-[0_22px_44px_-16px_rgba(12,32,50,0.55)]"
+            className="glass flex min-h-[170px] flex-col rounded-2xl p-5 shadow-[0_14px_34px_-16px_var(--glass-shadow)] transition-[transform,box-shadow] hover:-translate-y-1 hover:shadow-[0_22px_44px_-16px_var(--glass-shadow)]"
           >
             <p className="text-[10px] tracking-[0.14em] text-[var(--accent)] uppercase">
               {post.topic}

@@ -71,7 +71,7 @@ export function Timeline() {
       </section>
 
       <section id="education" className="mx-auto max-w-2xl px-6 pb-16">
-        <h2 className="text-center text-3xl font-semibold tracking-tight">Education</h2>
+        <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Education</h2>
         <div className="mt-10 space-y-6 border-l border-[var(--ink-soft)]/25 pl-6">
           {education.map((item) => (
             <m.div
@@ -97,7 +97,7 @@ export function Timeline() {
 function Node({ className }: { className: string }) {
   return (
     <span
-      className={`absolute rounded-full bg-[var(--accent)] ring-4 ring-[var(--cream)] dark:ring-[#091420] ${className}`}
+      className={`absolute rounded-full bg-[var(--accent)] ring-4 ring-[var(--cream)] ${className}`}
     />
   )
 }

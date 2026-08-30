@@ -15,7 +15,7 @@ export function duration(period: string): string {
 
 export const profile = {
   name: 'Pritom Purkayasta',
-  title: 'Engineer at cruising altitude',
+  title: 'Gilfoyle does the infra. Dinesh writes the Java. I ship.',
   careerStart: 'Feb 2018',
   get years() {
     return Math.floor(monthsBetween(this.careerStart, 'Present') / 12)
@@ -40,7 +40,7 @@ export type Experience = {
 
 export const experience: Experience[] = [
   {
-    company: 'Cefalo',
+    company: 'Cefalo Bangladesh Ltd.',
     period: 'Feb 2022 – Present',
     link: 'https://www.cefalo.com',
     roles: [
@@ -70,7 +70,7 @@ export const experience: Experience[] = [
         bullets: [
           'Adding an MCP server to the HR portal so people can just ask for their reports instead of filing a request and waiting.',
           'Building RAG over per-employee data, scoped per person, so answers stay grounded and nobody sees what they should not.',
-          'Building Convene in Blazor on top of PostgreSQL — C#-first, clean layering, no JavaScript framework to babysit.',
+          'Helped build Convene Customer Portal in Blazor on top of PostgreSQL — C#-first, clean layering, no JavaScript framework to babysit.',
           'GitHub Copilot and Claude Code are how I actually work now — agentic engineering as daily practice, not a demo. Also mentoring juniors and leading reviews.',
         ],
       },
@@ -191,7 +191,7 @@ export const skills: Array<{ genre: string; items: string[] }> = [
   },
   {
     genre: 'Web & UI',
-    items: ['Blazor (WASM & Server)', 'MudBlazor', 'React'],
+    items: ['Blazor (WASM & Server)', 'MudBlazor', 'React', 'Tailwind CSS', 'Bootstrap'],
   },
   {
     genre: 'AI & Agents',

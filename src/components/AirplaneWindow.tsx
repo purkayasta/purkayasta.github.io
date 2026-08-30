@@ -1,7 +1,8 @@
 import { m } from 'framer-motion'
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties, ReactNode, RefObject } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { profile } from '../data/portfolio'
+import { useWisdom } from '../hooks/useWisdom'
 import { SocialLinks } from './SocialLinks'
 
 const SHADE_DURATION = 1.1
@@ -41,14 +42,14 @@ const DEPTH = [
 
 const VISIBILITY = ['', '', 'hidden sm:block', 'hidden md:block', 'hidden lg:block']
 
-export function AirplaneWindow({
-  onOpenChange,
-}: {
-  onOpenChange: (isOpen: boolean, delayMs: number) => void
-}) {
+export function AirplaneWindow() {
   const hero = useRef<HTMLElement>(null)
   const [centerOpen, setCenterOpen] = useState(true)
   const [showHint, setShowHint] = useState(() => !hintSeen())
+
+  useEffect(() => {
+    document.documentElement.dataset.lit = centerOpen ? 'on' : 'off'
+  }, [centerOpen])
 
   useEffect(() => {
     const el = hero.current
@@ -63,7 +64,6 @@ export function AirplaneWindow({
   const toggleCenter = () => {
     const next = !centerOpen
     setCenterOpen(next)
-    onOpenChange(next, next ? 0 : SHADE_DURATION * 1000)
     if (showHint) {
       setShowHint(false)
       markHintSeen()
@@ -99,10 +99,13 @@ export function AirplaneWindow({
           </m.div>
         )}
         <div
-          className="pointer-events-none absolute -inset-x-16 -inset-y-12 -z-10 blur-2xl"
+          className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[105px] w-[76px] -translate-x-1/2 -translate-y-1/2 blur-[10px] sm:h-[123px] sm:w-[88px]"
           style={{
-            background:
-              'radial-gradient(60% 60% at 50% 50%, rgba(126,168,204,0.22), transparent 70%)',
+            borderRadius: APERTURE_RADIUS,
+            background: 'var(--glow)',
+            boxShadow: '0 0 34px 8px var(--glow), 0 0 90px 30px var(--glow)',
+            opacity: centerOpen ? 1 : 0,
+            transition: 'opacity var(--theme-ms) linear',
           }}
         />
         {Array.from({ length: SEATS }, (_, i) => {
@@ -188,7 +191,7 @@ function WindowSeat({
     >
       {interactive && (
         <span
-          className={`absolute top-1 right-2.5 z-20 h-1 w-1 rounded-full transition-all duration-700 ${
+          className={`absolute top-1 right-2.5 z-20 h-1 w-1 rounded-full transition-[background-color,box-shadow] duration-700 ${
             isOpen
               ? 'bg-sky-300 shadow-[0_0_6px_2px_rgba(125,211,252,0.9)]'
               : 'bg-amber-400 shadow-[0_0_6px_2px_rgba(251,191,36,0.8)]'
@@ -221,7 +224,7 @@ function WindowSeat({
         >
           {interactive && (
             <span
-              className="h-[5px] w-9 rounded-full transition-all duration-300 group-hover:w-11"
+              className="h-[5px] w-9 rounded-full transition-[width] duration-300 group-hover:w-11"
               style={{
                 background: 'linear-gradient(180deg, rgba(16,44,66,0.16), rgba(16,44,66,0.06))',
                 boxShadow:
@@ -250,15 +253,14 @@ function Sky({ isOpen, panX }: { isOpen: boolean; panX: number }) {
         className="absolute inset-0 transition-opacity duration-[1400ms]"
         style={{
           opacity: isOpen ? 1 : 0,
-          background:
-            'linear-gradient(180deg, #1c4d7c 0%, #3d7cae 26%, #7cadd2 44%, #b6d3e6 58%, #d8e7f0 68%, #b9cfdc 80%, #8ea9ba 100%)',
+          background: 'var(--w-day)',
         }}
       />
       <div
         className="absolute inset-0 transition-opacity duration-[1400ms]"
         style={{
           opacity: isOpen ? 0 : 1,
-          background: 'linear-gradient(180deg, #030a14 0%, #071726 40%, #0d2b42 72%, #14405f 100%)',
+          background: 'var(--w-night)',
         }}
       />
 
@@ -272,8 +274,7 @@ function Sky({ isOpen, panX }: { isOpen: boolean; panX: number }) {
         className="absolute inset-x-0 top-[46%] h-[28%] transition-opacity duration-1000"
         style={{
           opacity: isOpen ? 1 : 0,
-          background:
-            'radial-gradient(80% 100% at 30% 60%, rgba(226,240,248,0.85), transparent 72%)',
+          background: 'radial-gradient(80% 100% at 30% 60%, var(--w-glow), transparent 72%)',
         }}
       />
 
@@ -335,18 +336,22 @@ function Ridges({ isOpen, panX }: { isOpen: boolean; panX: number }) {
       <path
         d={FAR}
         className="transition-colors duration-[1400ms]"
-        fill={isOpen ? '#8fadc2' : '#0f2537'}
+        style={{ fill: isOpen ? 'var(--w-ridge-far)' : 'var(--w-nridge-far)' }}
         opacity={isOpen ? 0.65 : 0.85}
       />
       <path
         d={NEAR}
         className="transition-colors duration-[1400ms]"
-        fill={isOpen ? '#4c6577' : '#081824'}
+        style={{
+          fill: isOpen ? 'var(--w-ridge-near)' : 'var(--w-nridge-near)',
+        }}
       />
       <path
         d={HAZE}
         className="transition-colors duration-[1400ms]"
-        fill={isOpen ? '#b7cfdd' : '#102c42'}
+        style={{
+          fill: isOpen ? 'var(--w-ridge-haze)' : 'var(--w-nridge-haze)',
+        }}
         opacity="0.55"
       />
     </Layer>
@@ -368,7 +373,15 @@ function Cirrus({ isOpen, panX }: { isOpen: boolean; panX: number }) {
   return (
     <Layer panX={panX} speed="drift-near" opacity={isOpen ? 0.75 : 0.18}>
       {CIRRUS.map(([x, y, w], i) => (
-        <ellipse key={i} cx={x} cy={y} rx={w} ry="1.8" fill={isOpen ? '#ffffff' : '#7fa8cb'} />
+        <ellipse
+          key={i}
+          cx={x}
+          cy={y}
+          rx={w}
+          ry="1.8"
+          className="transition-colors duration-[1400ms]"
+          style={{ fill: isOpen ? 'var(--w-cirrus)' : 'var(--w-ncirrus)' }}
+        />
       ))}
     </Layer>
   )
@@ -384,17 +397,35 @@ function Wing({ isOpen }: { isOpen: boolean }) {
     >
       <defs>
         <linearGradient id="wing" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0%" stopColor={isOpen ? '#ffffff' : '#8ea6bb'} />
-          <stop offset="60%" stopColor={isOpen ? '#dbe4ea' : '#5d7488'} />
-          <stop offset="100%" stopColor={isOpen ? '#a8b8c4' : '#33465a'} />
+          <stop
+            offset="0%"
+            style={{
+              stopColor: isOpen ? 'var(--w-wing-1)' : 'var(--w-nwing-1)',
+            }}
+          />
+          <stop
+            offset="60%"
+            style={{
+              stopColor: isOpen ? 'var(--w-wing-2)' : 'var(--w-nwing-2)',
+            }}
+          />
+          <stop
+            offset="100%"
+            style={{
+              stopColor: isOpen ? 'var(--w-wing-3)' : 'var(--w-nwing-3)',
+            }}
+          />
         </linearGradient>
       </defs>
 
       <path d="M36 30 L44 42 L100 100 L100 74 Z" fill="url(#wing)" />
-      <path d="M36 30 L31 17 L39 20 L44 42 Z" fill={isOpen ? '#e0392b' : '#8c3128'} />
+      <path
+        d="M36 30 L31 17 L39 20 L44 42 Z"
+        style={{ fill: isOpen ? 'var(--w-fin)' : 'var(--w-nfin)' }}
+      />
       <path
         d="M36 30 L100 88"
-        stroke={isOpen ? '#ffffff' : '#a8c0d4'}
+        style={{ stroke: isOpen ? 'var(--w-strut)' : 'var(--w-nstrut)' }}
         strokeWidth="0.7"
         opacity="0.65"
       />
@@ -427,34 +458,289 @@ const STARS: Array<[number, number, number]> = [
 
 type Point = [number, number]
 
-const P0: Point = [24, 148]
-const PC: Point = [200, 14]
-const P1: Point = [376, 148]
+// top-down orbit around the wisdom: a tilted ellipse, nudged out of round so it
+// reads as a hand-flown circuit rather than a geometry lesson
+const CENTRE: Point = [200, 92]
+const TILT = (-7 * Math.PI) / 180
 
-const at = (t: number): Point => {
-  const u = 1 - t
+const orbit = (a: number): Point => {
+  const r = 1 + 0.07 * Math.sin(3 * a) - 0.05 * Math.cos(2 * a)
+  const [x, y] = [168 * r * Math.cos(a), 66 * r * Math.sin(a)]
   return [
-    u * u * P0[0] + 2 * u * t * PC[0] + t * t * P1[0],
-    u * u * P0[1] + 2 * u * t * PC[1] + t * t * P1[1],
+    CENTRE[0] + x * Math.cos(TILT) - y * Math.sin(TILT),
+    CENTRE[1] + x * Math.sin(TILT) + y * Math.cos(TILT),
   ]
 }
 
-const angleAt = (t: number) => {
-  const dx = 2 * (1 - t) * (PC[0] - P0[0]) + 2 * t * (P1[0] - PC[0])
-  const dy = 2 * (1 - t) * (PC[1] - P0[1]) + 2 * t * (P1[1] - PC[1])
-  return (Math.atan2(dy, dx) * 180) / Math.PI
+const SAMPLES = 240
+const LOOP: Point[] = Array.from({ length: SAMPLES }, (_, i) => orbit((i / SAMPLES) * 2 * Math.PI))
+
+const lerp = (a: Point, b: Point, t: number): Point => [
+  a[0] + (b[0] - a[0]) * t,
+  a[1] + (b[1] - a[1]) * t,
+]
+
+const dist = (a: Point, b: Point) => Math.hypot(b[0] - a[0], b[1] - a[1])
+
+// resample at constant speed so the plane holds one cruising pace all the way round
+const FRAMES = 60
+const CUM = LOOP.reduce<number[]>(
+  (acc, pt, i) => (acc.push(i === 0 ? 0 : acc[i - 1] + dist(LOOP[i - 1], pt)), acc),
+  [],
+)
+const TOTAL = CUM[CUM.length - 1] + dist(LOOP[LOOP.length - 1], LOOP[0])
+
+const atLength = (d: number): Point => {
+  const i = CUM.findIndex((c) => c > d)
+  if (i <= 0) return LOOP[0]
+  return lerp(LOOP[i - 1], LOOP[i], (d - CUM[i - 1]) / (CUM[i] - CUM[i - 1]))
 }
 
-const STEPS = Array.from({ length: 41 }, (_, i) => i / 40)
-const PATH = `M${P0[0]} ${P0[1]} Q${PC[0]} ${PC[1]} ${P1[0]} ${P1[1]}`
+const POINTS = Array.from({ length: FRAMES }, (_, i) => atLength((i * TOTAL) / FRAMES))
+
+// unwrapped headings — a monotonic sequence keeps the nose turning forwards
+const ANGLES = POINTS.reduce<number[]>((acc, pt, i) => {
+  const next = POINTS[(i + 1) % FRAMES]
+  const raw = (Math.atan2(next[1] - pt[1], next[0] - pt[0]) * 180) / Math.PI
+  const prev = i === 0 ? raw : acc[i - 1]
+  acc.push(raw + 360 * Math.round((prev - raw) / 360))
+  return acc
+}, [])
+
+const PLANES = 4
+const STAGGER = 2
+
+const rand = (min: number, max: number) => min + Math.random() * (max - min)
+
+// each plane gets its own lane, pace and size — random inside ranges tight enough
+// that the four still read as one loose formation. Rerolled whenever one respawns.
+const newPlane = (delay: number) => ({
+  delay,
+  bornAt: performance.now(),
+  duration: rand(11, 16),
+  lane: rand(0.93, 1.07),
+  scale: rand(0.72, 1.05),
+  gen: 0,
+  status: 'fly' as 'fly' | 'sucked' | 'gone',
+  hole: null as Point | null, // where it stops flying and starts falling
+})
+
+const SUCK_S = 1.15 // plane falls off its lane and into the hole
+const RESPAWN_S = 4 // …and the sky is short one plane until a new one shows up
+
+// pull the circuit in or out around its centre to give a plane its own lane
+const laneFlight = (lane: number) => {
+  const shift = (p: Point, d: 0 | 1) => CENTRE[d] + (p[d] - CENTRE[d]) * lane
+  return {
+    x: [...POINTS.map((p) => shift(p, 0)), shift(POINTS[0], 0)],
+    y: [...POINTS.map((p) => shift(p, 1)), shift(POINTS[0], 1)],
+    rotate: [...ANGLES, ANGLES[0] + 360],
+  }
+}
+
+const PATH = `M${LOOP.map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('L')}Z`
+
+const NEAR_MISS = 13 // viewBox units between two planes that counts as a party
+const DEBRIS = Array.from({ length: 10 }, (_, i) => (i * Math.PI * 2) / 10)
+
+type Party = { id: number; x: number; y: number }
+
+// watch the live transforms rather than replaying the timing maths — whatever the
+// browser actually painted is the only truth about where the planes are
+function useNearMisses(
+  svg: RefObject<SVGSVGElement | null>,
+  planes: RefObject<(SVGGElement | null)[]>,
+  airborneAt: RefObject<number[]>,
+  onHit: RefObject<(a: number, b: number, x: number, y: number) => void>,
+) {
+  const [parties, setParties] = useState<Party[]>([])
+
+  useEffect(() => {
+    let frame = 0
+    const touching = new Set<string>() // pairs already partying, so each pass fires once
+
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick)
+      const toViewBox = svg.current?.getScreenCTM()?.inverse()
+      if (!toViewBox) return
+
+      // plane origins, screen space → viewBox units so the burst lands on the SVG grid.
+      // A plane still waiting out its stagger delay is parked on the start line and
+      // does not count as traffic yet.
+      const spots = planes.current.map((el, i) => {
+        const at = now < (airborneAt.current[i] ?? Infinity) ? null : el?.getScreenCTM()
+        return at && new DOMPoint(at.e, at.f).matrixTransform(toViewBox)
+      })
+
+      for (let a = 0; a < spots.length; a++) {
+        for (let b = a + 1; b < spots.length; b++) {
+          const [p, q] = [spots[a], spots[b]]
+          const pair = `${a}-${b}`
+          if (!p || !q || Math.hypot(p.x - q.x, p.y - q.y) > NEAR_MISS) {
+            touching.delete(pair)
+            continue
+          }
+          if (touching.has(pair)) continue
+          touching.add(pair)
+          // the hole always tears open at the centre of the circuit, not at the
+          // point of contact — the pair then falls in from wherever they met
+          const [x, y] = CENTRE
+          setParties((open) => [...open, { id: now, x, y }])
+          onHit.current(a, b, x, y)
+        }
+      }
+    }
+
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [svg, planes, airborneAt, onHit])
+
+  const clear = (id: number) => setParties((open) => open.filter((p) => p.id !== id))
+  return { parties, clear }
+}
+
+const COLLAPSE = 2.2 // whole event: hole opens, eats, evaporates
+const HORIZON = 8 // event-horizon radius, viewBox units
+
+// two planes stray into the same bit of sky, a hole opens between them, drags
+// them past the horizon and then evaporates with them inside
+function Party({ at, onDone }: { at: Party; onDone: () => void }) {
+  // fractions of COLLAPSE: hole open → planes swallowed → evaporation
+  const OPEN = 0.12
+  const EATEN = SUCK_S / COLLAPSE
+
+  return (
+    <m.g
+      initial={{ opacity: 1 }}
+      animate={{ opacity: [1, 1, 0] }}
+      transition={{ duration: COLLAPSE, times: [0, 0.92, 1] }}
+      onAnimationComplete={onDone}
+      transform={`translate(${at.x} ${at.y})`}
+    >
+      {/* lensed light: the sky behind the hole smeared into a halo */}
+      <m.circle
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth="0.35"
+        animate={{ r: [0, HORIZON * 3.4, HORIZON * 2.6, 0], opacity: [0, 0.3, 0.16, 0] }}
+        transition={{ duration: COLLAPSE, times: [0, OPEN, 0.92, 1], ease: 'easeOut' }}
+      />
+
+      {/* accretion disc, tilted and drawn edge-on-ish; the dashes are infalling
+          matter, so they run round the rim faster as the hole feeds */}
+      <m.g
+        transform="rotate(-20)"
+        animate={{ opacity: [0, 0.95, 0.7, 0], scale: [0.3, 1, 1.05, 0] }}
+        transition={{ duration: COLLAPSE, times: [0, OPEN, EATEN, 1], ease: 'easeOut' }}
+      >
+        <m.ellipse
+          rx={HORIZON * 2.2}
+          ry={HORIZON * 0.62}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="1.6"
+          strokeDasharray="5 3"
+          animate={{ strokeDashoffset: [0, -64] }}
+          transition={{ duration: COLLAPSE, ease: 'easeIn' }}
+        />
+        <ellipse
+          rx={HORIZON * 1.55}
+          ry={HORIZON * 0.44}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="0.6"
+          opacity="0.5"
+        />
+      </m.g>
+
+      {/* debris off the impact: thrown clear, then reeled back in on a spiral */}
+      <m.g
+        animate={{ rotate: [0, 200] }}
+        transition={{ duration: COLLAPSE, ease: 'easeIn' }}
+      >
+        {DEBRIS.map((angle, i) => (
+          <m.circle
+            key={i}
+            fill="var(--accent)"
+            animate={{
+              cx: [0, 0, Math.cos(angle) * 24, 0],
+              cy: [0, 0, Math.sin(angle) * 24, 0],
+              r: [0, 1.4, 1.1, 0],
+              opacity: [0, 1, 0.8, 0],
+            }}
+            transition={{
+              duration: COLLAPSE,
+              times: [0, EATEN, EATEN + 0.12, 0.9],
+              ease: 'easeIn',
+            }}
+          />
+        ))}
+      </m.g>
+
+      {/* photon ring — the last light that still gets out */}
+      <m.circle
+        fill="none"
+        stroke="var(--accent)"
+        animate={{
+          r: [0, HORIZON * 1.12, HORIZON * 1.12, 0],
+          strokeWidth: [0, 0.9, 1.6, 0],
+          opacity: [0, 1, 1, 0],
+        }}
+        transition={{ duration: COLLAPSE, times: [0, OPEN, EATEN, 1], ease: 'easeOut' }}
+      />
+
+      {/* the horizon: nothing comes back out of this bit */}
+      <m.circle
+        fill="var(--bg)"
+        animate={{ r: [0, HORIZON, HORIZON, 0] }}
+        transition={{ duration: COLLAPSE, times: [0, OPEN, 0.92, 1], ease: 'easeOut' }}
+      />
+    </m.g>
+  )
+}
 
 function FlightPath() {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const planes = useRef<(SVGGElement | null)[]>([])
+  const [fleet, setFleet] = useState(() =>
+    Array.from({ length: PLANES }, (_, i) => newPlane(i * STAGGER)),
+  )
+
+  const setStatus = (crew: number[], status: 'fly' | 'sucked' | 'gone') =>
+    setFleet((f) => f.map((p, i) => (crew.includes(i) ? { ...p, status } : p)))
+
+  const swallow = useRef((a: number, b: number, x: number, y: number) => {
+    planes.current[a] = planes.current[b] = null // out of the collision check at once
+    setFleet((f) =>
+      f.map((p, i) => (i === a || i === b ? { ...p, status: 'sucked' as const, hole: [x, y] } : p)),
+    )
+    setTimeout(() => setStatus([a, b], 'gone'), SUCK_S * 1000)
+    setTimeout(
+      () =>
+        setFleet((f) =>
+          // b waits a beat so the pair cannot respawn nose-to-nose and detonate again
+          f.map((p, i) =>
+            i === a || i === b ? { ...newPlane(i === b ? STAGGER : 0), gen: p.gen + 1 } : p,
+          ),
+        ),
+      (SUCK_S + RESPAWN_S) * 1000,
+    )
+  })
+
+  // in the air only once the entry delay and fade-in are done
+  const airborneAt = useRef<number[]>([])
+  useEffect(() => {
+    airborneAt.current = fleet.map((p) => p.bornAt + (p.delay + 1) * 1000)
+  }, [fleet])
+
+  const { parties, clear } = useNearMisses(svgRef, planes, airborneAt, swallow)
+
   return (
     <div
       style={{ '--reveal-delay': '480ms' } as CSSProperties}
       className="theme-fade relative -mb-4 w-full max-w-3xl"
     >
-      <svg viewBox="0 0 400 180" className="pointer-events-none h-28 w-full sm:h-36">
+      <svg ref={svgRef} viewBox="0 0 400 180" className="pointer-events-none h-28 w-full sm:h-36">
         <defs>
           <linearGradient id="trail-fade" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.05" />
@@ -474,29 +760,88 @@ function FlightPath() {
           transition={{ duration: 1.6, delay: 0.5, ease: 'easeOut' }}
         />
 
-        <m.g
-          initial={false}
-          whileInView={{
-            x: STEPS.map((t) => at(t)[0]),
-            y: STEPS.map((t) => at(t)[1]),
-            rotate: STEPS.map(angleAt),
-          }}
-          transition={{ duration: 11, repeat: Infinity, ease: 'linear' }}
-        >
-          <path
-            d="M9 0 -6 -5.5 -4 -0.9 -1.5 -0.9 -6 3.2 -3.6 3.2 Z"
-            fill="var(--accent)"
-            opacity="0.85"
-          />
-        </m.g>
+        {fleet.map((plane, i) =>
+          plane.status === 'gone' ? null : (
+            <m.g
+              key={`${i}-${plane.gen}`}
+              ref={(el: SVGGElement | null) => {
+                planes.current[i] = el
+              }}
+              initial={{
+                opacity: 0,
+                x: laneFlight(plane.lane).x[0],
+                y: laneFlight(plane.lane).y[0],
+                rotate: ANGLES[0],
+              }}
+              whileInView={
+                // caught: drop the circuit and fall straight at the hole
+                plane.hole
+                  ? { x: plane.hole[0], y: plane.hole[1], opacity: 1 }
+                  : { ...laneFlight(plane.lane), opacity: 0.35 + plane.scale * 0.5 }
+              }
+              transition={
+                plane.hole
+                  ? { duration: SUCK_S, ease: [0.5, 0, 1, 1] }
+                  : {
+                      default: {
+                        duration: plane.duration,
+                        repeat: Infinity,
+                        ease: 'linear',
+                        delay: plane.delay,
+                      },
+                      opacity: { duration: 0.6, delay: plane.delay },
+                    }
+              }
+            >
+              {/* folded-paper plane: lit wing, shaded wing, creased spine */}
+              <m.g
+                initial={{ scale: plane.scale }}
+                animate={
+                  plane.status === 'sucked'
+                    ? // spaghettified: stretched along the fall, wrung out, gone
+                      { scaleX: [plane.scale, plane.scale * 1.9, 0], scaleY: [plane.scale, 0.25, 0], rotate: 620, opacity: [1, 1, 0] }
+                    : { scale: plane.scale }
+                }
+                transition={{ duration: SUCK_S, ease: 'easeIn' }}
+              >
+                <path d="M11 0 -8.5 -7 -3 0 Z" fill="var(--accent)" />
+                <path d="M11 0 -3 0 -8.5 7 Z" fill="var(--accent)" opacity="0.5" />
+                <path d="M11 0 -3 0" stroke="var(--bg)" strokeWidth="0.6" opacity="0.5" />
+              </m.g>
+            </m.g>
+          ),
+        )}
+
+        {parties.map((party) => (
+          <Party key={party.id} at={party} onDone={() => clear(party.id)} />
+        ))}
       </svg>
+
+      <Wisdom />
 
       <a
         href="#experience"
-        className="mx-auto -mt-4 block w-fit text-xs text-[var(--ink-soft)] underline decoration-[var(--ink-soft)]/40 underline-offset-4 transition-colors hover:decoration-[var(--accent)]"
+        className="mx-auto mt-1 block w-fit text-xs sm:-mt-4 text-[var(--ink-soft)] underline decoration-[var(--ink-soft)]/40 underline-offset-4 transition-colors hover:decoration-[var(--accent)]"
       >
         Experience ↓
       </a>
     </div>
+  )
+}
+
+function Wisdom() {
+  const wisdom = useWisdom()
+  if (!wisdom) return null
+
+  return (
+    <m.p
+      key={wisdom}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: 'easeOut' }}
+      className="pointer-events-none absolute top-[51%] left-1/2 w-[46%] -translate-x-1/2 -translate-y-1/2 text-center text-[11px] leading-snug tracking-wide text-[var(--ink-soft)] italic"
+    >
+      {wisdom}
+    </m.p>
   )
 }

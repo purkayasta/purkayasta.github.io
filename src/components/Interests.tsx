@@ -12,7 +12,7 @@ const ICONS: Record<string, string> = {
 export function Interests() {
   return (
     <section id="interests" className="mx-auto max-w-2xl px-6 py-16">
-      <h2 className="text-center text-3xl font-semibold tracking-tight">Interests</h2>
+      <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Interests</h2>
 
       <div className="mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
         {interests.map((label, i) => (

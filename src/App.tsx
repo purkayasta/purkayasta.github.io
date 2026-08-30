@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { domAnimation, LazyMotion } from 'framer-motion'
+import { AccentSwitch } from './components/AccentSwitch'
 import { AirplaneWindow } from './components/AirplaneWindow'
 import { Timeline } from './components/Timeline'
 import { Skills } from './components/Skills'
@@ -8,18 +9,19 @@ import { Writing } from './components/Writing'
 import { Interests } from './components/Interests'
 import { Contact } from './components/Contact'
 import { SectionIndex } from './components/SectionIndex'
-import { useTheme } from './hooks/useTheme'
+import { useReveal } from './hooks/useReveal'
 
 const delay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties
 
 function App() {
-  const { setDarkWithDelay } = useTheme()
+  useReveal()
 
   return (
     <LazyMotion features={domAnimation} strict>
       <main>
+        <AccentSwitch />
         <SectionIndex />
-        <AirplaneWindow onOpenChange={(isOpen, delayMs) => setDarkWithDelay(!isOpen, delayMs)} />
+        <AirplaneWindow />
         <div className="theme-fade" style={delay(600)}>
           <Timeline />
         </div>

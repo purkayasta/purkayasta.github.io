@@ -43,7 +43,7 @@ export function SectionIndex() {
     <nav
       aria-label="Sections"
       aria-hidden={hidden}
-      className={`theme-fade fixed top-1/2 right-5 z-30 hidden -translate-y-1/2 transition-all duration-500 lg:block ${
+      className={`theme-fade fixed top-1/2 right-5 z-30 hidden -translate-y-1/2 transition-[opacity,transform] duration-500 lg:block ${
         hidden ? 'pointer-events-none translate-x-6 opacity-0' : 'opacity-100'
       }`}
     >
@@ -58,7 +58,7 @@ export function SectionIndex() {
                 className="group flex items-center justify-end gap-2.5"
               >
                 <span
-                  className={`text-[10px] tracking-[0.14em] uppercase transition-all duration-300 group-hover:opacity-100 ${
+                  className={`text-[10px] tracking-[0.14em] uppercase transition-[opacity,color] duration-300 group-hover:opacity-100 ${
                     isActive
                       ? 'text-[var(--accent)] opacity-100'
                       : 'text-[var(--ink-soft)] opacity-0'
@@ -68,7 +68,7 @@ export function SectionIndex() {
                 </span>
 
                 <span
-                  className={`absolute top-1/2 right-0 -translate-y-1/2 translate-x-[calc(50%+16px)] rounded-full ring-4 ring-[var(--cream)] transition-all duration-300 dark:ring-[#091420] ${
+                  className={`absolute top-1/2 right-0 -translate-y-1/2 translate-x-[calc(50%+16px)] rounded-full ring-4 ring-[var(--cream)] transition-[width,height,background-color] duration-300 ${
                     isActive
                       ? 'h-2.5 w-2.5 bg-[var(--accent)]'
                       : 'h-1.5 w-1.5 bg-[var(--ink-soft)]/50 group-hover:bg-[var(--accent)]'
