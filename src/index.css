@@ -1,0 +1,59 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  --cream: #faf3e7;
+  --cream-2: #f3e9d7;
+  --ink: #3a3226;
+  --ink-soft: #6b6152;
+}
+
+html {
+  scroll-behavior: smooth;
+  transition: background-color 0.8s ease;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--cream);
+  color: var(--ink);
+  transition:
+    background-color 1.2s ease,
+    color 1.2s ease;
+}
+
+html.dark body {
+  background: #0b0e18;
+  color: #d7dae2;
+  --ink: #d7dae2;
+  --ink-soft: #8b93a7;
+  --cream-2: #1a1d2b;
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(-40px);
+  }
+  to {
+    transform: translateX(340px);
+  }
+}
+
+.animate-drift-slow {
+  left: -40px;
+  animation: drift 14s linear infinite;
+}
+.animate-drift-medium {
+  left: -40px;
+  animation: drift 9s linear infinite;
+  animation-delay: -3s;
+}
+.animate-drift-fast {
+  left: -40px;
+  animation: drift 6s linear infinite;
+  animation-delay: -1s;
+}
