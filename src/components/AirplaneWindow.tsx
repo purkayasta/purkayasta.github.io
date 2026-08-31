@@ -2,7 +2,6 @@ import { m } from 'framer-motion'
 import type { CSSProperties, ReactNode, RefObject } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { profile } from '../data/portfolio'
-import { useWisdom } from '../hooks/useWisdom'
 import { SocialLinks } from './SocialLinks'
 
 const SHADE_DURATION = 1.1
@@ -458,7 +457,7 @@ const STARS: Array<[number, number, number]> = [
 
 type Point = [number, number]
 
-// top-down orbit around the wisdom: a tilted ellipse, nudged out of round so it
+// top-down orbit around the sun: a tilted ellipse, nudged out of round so it
 // reads as a hand-flown circuit rather than a geometry lesson
 const CENTRE: Point = [200, 92]
 const TILT = (-7 * Math.PI) / 180
@@ -498,58 +497,59 @@ const atLength = (d: number): Point => {
 
 const POINTS = Array.from({ length: FRAMES }, (_, i) => atLength((i * TOTAL) / FRAMES))
 
-// unwrapped headings — a monotonic sequence keeps the nose turning forwards
-const ANGLES = POINTS.reduce<number[]>((acc, pt, i) => {
-  const next = POINTS[(i + 1) % FRAMES]
-  const raw = (Math.atan2(next[1] - pt[1], next[0] - pt[0]) * 180) / Math.PI
-  const prev = i === 0 ? raw : acc[i - 1]
-  acc.push(raw + 360 * Math.round((prev - raw) / 360))
-  return acc
-}, [])
-
-const PLANES = 4
-const STAGGER = 2
+// inner→outer, roughly Mercury..Saturn in relative size; the ringed one is Saturn
+const PLANETS = [
+  { r: 2.2, ring: false },
+  { r: 3.2, ring: false },
+  { r: 3.4, ring: false },
+  { r: 2.6, ring: false },
+  { r: 6.2, ring: false },
+  { r: 5.2, ring: true },
+  { r: 4.0, ring: false },
+]
+const STAGGER = 0.5
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min)
 
-// each plane gets its own lane, pace and size — random inside ranges tight enough
-// that the four still read as one loose formation. Rerolled whenever one respawns.
-const newPlane = (delay: number) => ({
+// each planet keeps its own orbit and pace: lanes climb outwards, periods climb
+// with them (Kepler, loosely), and the jitter is wide enough that neighbouring
+// lanes overlap — which is how two of them ever end up in the same bit of sky.
+const newPlanet = (i: number, delay: number) => ({
   delay,
   bornAt: performance.now(),
-  duration: rand(11, 16),
-  lane: rand(0.93, 1.07),
-  scale: rand(0.72, 1.05),
+  duration: rand(7 + i * 2.4, 10 + i * 2.4),
+  lane: 0.34 + i * 0.11 + rand(-0.05, 0.05),
   gen: 0,
   status: 'fly' as 'fly' | 'sucked' | 'gone',
-  hole: null as Point | null, // where it stops flying and starts falling
+  hole: null as Point | null, // where it stops orbiting and starts falling
+  ...PLANETS[i],
 })
 
-const SUCK_S = 1.15 // plane falls off its lane and into the hole
-const RESPAWN_S = 4 // …and the sky is short one plane until a new one shows up
+const SUCK_S = 1.15 // planet leaves its orbit and falls into the hole
+const RESPAWN_S = 4 // …and the sky is short one planet until it reforms
 
-// pull the circuit in or out around its centre to give a plane its own lane
+// pull the circuit in or out around its centre to give a planet its own orbit
 const laneFlight = (lane: number) => {
   const shift = (p: Point, d: 0 | 1) => CENTRE[d] + (p[d] - CENTRE[d]) * lane
   return {
     x: [...POINTS.map((p) => shift(p, 0)), shift(POINTS[0], 0)],
     y: [...POINTS.map((p) => shift(p, 1)), shift(POINTS[0], 1)],
-    rotate: [...ANGLES, ANGLES[0] + 360],
   }
 }
 
-const PATH = `M${LOOP.map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('L')}Z`
+const lanePath = (lane: number) =>
+  `M${LOOP.map((p) => `${(CENTRE[0] + (p[0] - CENTRE[0]) * lane).toFixed(1)} ${(CENTRE[1] + (p[1] - CENTRE[1]) * lane).toFixed(1)}`).join('L')}Z`
 
-const NEAR_MISS = 13 // viewBox units between two planes that counts as a party
+const NEAR_MISS = 11 // viewBox units between two planets that counts as a collision
 const DEBRIS = Array.from({ length: 10 }, (_, i) => (i * Math.PI * 2) / 10)
 
 type Party = { id: number; x: number; y: number }
 
 // watch the live transforms rather than replaying the timing maths — whatever the
-// browser actually painted is the only truth about where the planes are
+// browser actually painted is the only truth about where the planets are
 function useNearMisses(
   svg: RefObject<SVGSVGElement | null>,
-  planes: RefObject<(SVGGElement | null)[]>,
+  planets: RefObject<(SVGGElement | null)[]>,
   airborneAt: RefObject<number[]>,
   onHit: RefObject<(a: number, b: number, x: number, y: number) => void>,
 ) {
@@ -564,10 +564,10 @@ function useNearMisses(
       const toViewBox = svg.current?.getScreenCTM()?.inverse()
       if (!toViewBox) return
 
-      // plane origins, screen space → viewBox units so the burst lands on the SVG grid.
-      // A plane still waiting out its stagger delay is parked on the start line and
+      // planet origins, screen space → viewBox units so the burst lands on the SVG grid.
+      // A planet still waiting out its stagger delay is parked on the start line and
       // does not count as traffic yet.
-      const spots = planes.current.map((el, i) => {
+      const spots = planets.current.map((el, i) => {
         const at = now < (airborneAt.current[i] ?? Infinity) ? null : el?.getScreenCTM()
         return at && new DOMPoint(at.e, at.f).matrixTransform(toViewBox)
       })
@@ -582,8 +582,8 @@ function useNearMisses(
           }
           if (touching.has(pair)) continue
           touching.add(pair)
-          // the hole always tears open at the centre of the circuit, not at the
-          // point of contact — the pair then falls in from wherever they met
+          // the hole always tears open at the centre of the system, not at the
+          // point of contact — the pair then fall in from wherever they met
           const [x, y] = CENTRE
           setParties((open) => [...open, { id: now, x, y }])
           onHit.current(a, b, x, y)
@@ -593,7 +593,7 @@ function useNearMisses(
 
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [svg, planes, airborneAt, onHit])
+  }, [svg, planets, airborneAt, onHit])
 
   const clear = (id: number) => setParties((open) => open.filter((p) => p.id !== id))
   return { parties, clear }
@@ -602,10 +602,10 @@ function useNearMisses(
 const COLLAPSE = 2.2 // whole event: hole opens, eats, evaporates
 const HORIZON = 8 // event-horizon radius, viewBox units
 
-// two planes stray into the same bit of sky, a hole opens between them, drags
+// two planets stray into the same bit of sky, a hole opens between them, drags
 // them past the horizon and then evaporates with them inside
 function Party({ at, onDone }: { at: Party; onDone: () => void }) {
-  // fractions of COLLAPSE: hole open → planes swallowed → evaporation
+  // fractions of COLLAPSE: hole open → planets swallowed → evaporation
   const OPEN = 0.12
   const EATEN = SUCK_S / COLLAPSE
 
@@ -701,16 +701,16 @@ function Party({ at, onDone }: { at: Party; onDone: () => void }) {
 
 function FlightPath() {
   const svgRef = useRef<SVGSVGElement>(null)
-  const planes = useRef<(SVGGElement | null)[]>([])
+  const planets = useRef<(SVGGElement | null)[]>([])
   const [fleet, setFleet] = useState(() =>
-    Array.from({ length: PLANES }, (_, i) => newPlane(i * STAGGER)),
+    PLANETS.map((_, i) => newPlanet(i, i * STAGGER)),
   )
 
   const setStatus = (crew: number[], status: 'fly' | 'sucked' | 'gone') =>
     setFleet((f) => f.map((p, i) => (crew.includes(i) ? { ...p, status } : p)))
 
   const swallow = useRef((a: number, b: number, x: number, y: number) => {
-    planes.current[a] = planes.current[b] = null // out of the collision check at once
+    planets.current[a] = planets.current[b] = null // out of the collision check at once
     setFleet((f) =>
       f.map((p, i) => (i === a || i === b ? { ...p, status: 'sucked' as const, hole: [x, y] } : p)),
     )
@@ -718,9 +718,9 @@ function FlightPath() {
     setTimeout(
       () =>
         setFleet((f) =>
-          // b waits a beat so the pair cannot respawn nose-to-nose and detonate again
+          // b waits a beat so the pair cannot reform on top of each other and go again
           f.map((p, i) =>
-            i === a || i === b ? { ...newPlane(i === b ? STAGGER : 0), gen: p.gen + 1 } : p,
+            i === a || i === b ? { ...newPlanet(i, i === b ? STAGGER : 0), gen: p.gen + 1 } : p,
           ),
         ),
       (SUCK_S + RESPAWN_S) * 1000,
@@ -733,7 +733,7 @@ function FlightPath() {
     airborneAt.current = fleet.map((p) => p.bornAt + (p.delay + 1) * 1000)
   }, [fleet])
 
-  const { parties, clear } = useNearMisses(svgRef, planes, airborneAt, swallow)
+  const { parties, clear } = useNearMisses(svgRef, planets, airborneAt, swallow)
 
   return (
     <div
@@ -749,64 +749,98 @@ function FlightPath() {
           </linearGradient>
         </defs>
 
-        <m.path
-          d={PATH}
+        {fleet.map((planet, i) => (
+          <m.path
+            key={`track-${i}`}
+            d={lanePath(planet.lane)}
+            fill="none"
+            stroke="url(#trail-fade)"
+            strokeWidth="0.5"
+            strokeDasharray="3 5"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ duration: 1.6, delay: 0.4 + i * 0.08, ease: 'easeOut' }}
+          />
+        ))}
+
+        {/* the sun everything is falling around */}
+        <m.circle
+          cx={CENTRE[0]}
+          cy={CENTRE[1]}
+          fill="var(--accent)"
+          initial={{ r: 0, opacity: 0 }}
+          animate={{ r: 5, opacity: 0.9 }}
+          transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+        />
+        <m.circle
+          cx={CENTRE[0]}
+          cy={CENTRE[1]}
           fill="none"
-          stroke="url(#trail-fade)"
-          strokeWidth="0.8"
-          strokeDasharray="4 6"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 1.6, delay: 0.5, ease: 'easeOut' }}
+          stroke="var(--accent)"
+          strokeWidth="0.5"
+          animate={{ r: [7, 10, 7], opacity: [0.35, 0.1, 0.35] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         />
 
-        {fleet.map((plane, i) =>
-          plane.status === 'gone' ? null : (
+        {fleet.map((planet, i) =>
+          planet.status === 'gone' ? null : (
             <m.g
-              key={`${i}-${plane.gen}`}
+              key={`${i}-${planet.gen}`}
               ref={(el: SVGGElement | null) => {
-                planes.current[i] = el
+                planets.current[i] = el
               }}
               initial={{
                 opacity: 0,
-                x: laneFlight(plane.lane).x[0],
-                y: laneFlight(plane.lane).y[0],
-                rotate: ANGLES[0],
+                x: laneFlight(planet.lane).x[0],
+                y: laneFlight(planet.lane).y[0],
               }}
               whileInView={
-                // caught: drop the circuit and fall straight at the hole
-                plane.hole
-                  ? { x: plane.hole[0], y: plane.hole[1], opacity: 1 }
-                  : { ...laneFlight(plane.lane), opacity: 0.35 + plane.scale * 0.5 }
+                // caught: drop the orbit and fall straight at the hole
+                planet.hole
+                  ? { x: planet.hole[0], y: planet.hole[1], opacity: 1 }
+                  : { ...laneFlight(planet.lane), opacity: 0.9 }
               }
               transition={
-                plane.hole
+                planet.hole
                   ? { duration: SUCK_S, ease: [0.5, 0, 1, 1] }
                   : {
                       default: {
-                        duration: plane.duration,
+                        duration: planet.duration,
                         repeat: Infinity,
                         ease: 'linear',
-                        delay: plane.delay,
+                        delay: planet.delay,
                       },
-                      opacity: { duration: 0.6, delay: plane.delay },
+                      opacity: { duration: 0.6, delay: planet.delay },
                     }
               }
             >
-              {/* folded-paper plane: lit wing, shaded wing, creased spine */}
               <m.g
-                initial={{ scale: plane.scale }}
                 animate={
-                  plane.status === 'sucked'
+                  planet.status === 'sucked'
                     ? // spaghettified: stretched along the fall, wrung out, gone
-                      { scaleX: [plane.scale, plane.scale * 1.9, 0], scaleY: [plane.scale, 0.25, 0], rotate: 620, opacity: [1, 1, 0] }
-                    : { scale: plane.scale }
+                      { scaleX: [1, 1.9, 0], scaleY: [1, 0.25, 0], rotate: 620, opacity: [1, 1, 0] }
+                    : {}
                 }
                 transition={{ duration: SUCK_S, ease: 'easeIn' }}
               >
-                <path d="M11 0 -8.5 -7 -3 0 Z" fill="var(--accent)" />
-                <path d="M11 0 -3 0 -8.5 7 Z" fill="var(--accent)" opacity="0.5" />
-                <path d="M11 0 -3 0" stroke="var(--bg)" strokeWidth="0.6" opacity="0.5" />
+                {planet.ring && (
+                  <ellipse
+                    transform="rotate(-18)"
+                    rx={planet.r * 1.9}
+                    ry={planet.r * 0.5}
+                    fill="none"
+                    stroke="var(--accent)"
+                    strokeWidth="0.9"
+                    opacity="0.55"
+                  />
+                )}
+                <circle r={planet.r} fill="var(--accent)" />
+                {/* terminator: the half turned away from the sun */}
+                <path
+                  d={`M0 ${-planet.r}A${planet.r} ${planet.r} 0 0 1 0 ${planet.r}Z`}
+                  fill="var(--bg)"
+                  opacity="0.3"
+                />
               </m.g>
             </m.g>
           ),
@@ -817,8 +851,6 @@ function FlightPath() {
         ))}
       </svg>
 
-      <Wisdom />
-
       <a
         href="#experience"
         className="mx-auto mt-1 block w-fit text-xs sm:-mt-4 text-[var(--ink-soft)] underline decoration-[var(--ink-soft)]/40 underline-offset-4 transition-colors hover:decoration-[var(--accent)]"
@@ -826,22 +858,5 @@ function FlightPath() {
         Experience ↓
       </a>
     </div>
-  )
-}
-
-function Wisdom() {
-  const wisdom = useWisdom()
-  if (!wisdom) return null
-
-  return (
-    <m.p
-      key={wisdom}
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: 'easeOut' }}
-      className="pointer-events-none absolute top-[51%] left-1/2 w-[46%] -translate-x-1/2 -translate-y-1/2 text-center text-[11px] leading-snug tracking-wide text-[var(--ink-soft)] italic"
-    >
-      {wisdom}
-    </m.p>
   )
 }
