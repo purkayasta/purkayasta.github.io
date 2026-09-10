@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react'
 import { domAnimation, LazyMotion } from 'framer-motion'
-import { AccentSwitch } from './components/AccentSwitch'
 import { AirplaneWindow } from './components/AirplaneWindow'
 import { Timeline } from './components/Timeline'
 import { Skills } from './components/Skills'
@@ -19,7 +18,6 @@ function App() {
   return (
     <LazyMotion features={domAnimation} strict>
       <main>
-        <AccentSwitch />
         <SectionIndex />
         <AirplaneWindow />
         <div className="theme-fade" style={delay(600)}>

@@ -1,10 +1,8 @@
 import { m } from 'framer-motion'
-import type { CSSProperties, ReactNode, RefObject } from 'react'
+import type { ComponentProps, CSSProperties, PointerEvent, ReactNode, RefObject } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { profile } from '../data/portfolio'
 import { SocialLinks } from './SocialLinks'
-
-const SHADE_DURATION = 1.1
 
 const HINT_KEY = 'shade-hint-seen'
 const hintSeen = () => {
@@ -23,6 +21,13 @@ const markHintSeen = () => {
 }
 
 const APERTURE_RADIUS = '42% / 30%'
+
+// every sky colour has a night and a day value; --lit says how far between them
+const mix = (night: string, day: string) =>
+  `color-mix(in oklab, var(${night}), var(${day}) var(--litp))`
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
+const SHADE_TRAVEL = 0.87 // fraction of the pane the shade clears when fully up
 
 const SEATS = 9
 const CENTER = Math.floor(SEATS / 2)
@@ -43,12 +48,11 @@ const VISIBILITY = ['', '', 'hidden sm:block', 'hidden md:block', 'hidden lg:blo
 
 export function AirplaneWindow() {
   const hero = useRef<HTMLElement>(null)
-  const [centerOpen, setCenterOpen] = useState(true)
+  const lit = useRef(1)
+  const [open, setOpen] = useState(true)
   const [showHint, setShowHint] = useState(() => !hintSeen())
-
-  useEffect(() => {
-    document.documentElement.dataset.lit = centerOpen ? 'on' : 'off'
-  }, [centerOpen])
+  const drag = useRef<{ from: number; lit: number; travel: number } | null>(null)
+  const dragged = useRef(false)
 
   useEffect(() => {
     const el = hero.current
@@ -60,13 +64,61 @@ export function AirplaneWindow() {
     return () => observer.disconnect()
   }, [])
 
-  const toggleCenter = () => {
-    const next = !centerOpen
-    setCenterOpen(next)
-    if (showHint) {
-      setShowHint(false)
-      markHintSeen()
-    }
+  const dismissHint = () => {
+    if (!showHint) return
+    setShowHint(false)
+    markHintSeen()
+  }
+
+  const setLit = (next: number) => {
+    lit.current = next
+    document.documentElement.style.setProperty('--lit', String(next))
+  }
+
+  const endDrag = () => {
+    if (!drag.current) return
+    drag.current = null
+    if (!dragged.current) return // a tap: onClick has it
+    delete document.documentElement.dataset.dragging
+    setOpen(lit.current > 0.5)
+  }
+
+  const shade: ComponentProps<'button'> = {
+    onPointerDown: (e: PointerEvent<HTMLElement>) => {
+      e.currentTarget.setPointerCapture(e.pointerId)
+      dragged.current = false
+      drag.current = {
+        from: e.clientY,
+        lit: lit.current,
+        travel: e.currentTarget.clientHeight * SHADE_TRAVEL,
+      }
+    },
+    onPointerMove: (e: PointerEvent<HTMLElement>) => {
+      const d = drag.current
+      if (!d) return
+      const dy = e.clientY - d.from
+      if (!dragged.current) {
+        if (Math.abs(dy) < 3) return // still a tap
+        dragged.current = true
+        document.documentElement.dataset.dragging = ''
+        dismissHint()
+      }
+      // pull down and the shade follows the finger, taking the daylight with it
+      setLit(clamp01(d.lit - dy / d.travel))
+    },
+    onPointerUp: endDrag,
+    onPointerCancel: endDrag,
+    // fires after a tap, and is all a keyboard sends
+    onClick: () => {
+      if (dragged.current) {
+        dragged.current = false
+        return
+      }
+      const next = lit.current > 0.5 ? 0 : 1
+      setLit(next)
+      setOpen(next === 1)
+      dismissHint()
+    },
   }
 
   return (
@@ -103,8 +155,7 @@ export function AirplaneWindow() {
             borderRadius: APERTURE_RADIUS,
             background: 'var(--glow)',
             boxShadow: '0 0 34px 8px var(--glow), 0 0 90px 30px var(--glow)',
-            opacity: centerOpen ? 1 : 0,
-            transition: 'opacity var(--theme-ms) linear',
+            opacity: 'var(--lit)',
           }}
         />
         {Array.from({ length: SEATS }, (_, i) => {
@@ -112,9 +163,9 @@ export function AirplaneWindow() {
           return (
             <WindowSeat
               key={i}
-              isOpen={dist === 0 ? centerOpen : false}
+              open={open}
               interactive={dist === 0}
-              onClick={dist === 0 ? toggleCenter : undefined}
+              handlers={dist === 0 ? shade : undefined}
               dist={dist}
             />
           )
@@ -151,31 +202,31 @@ export function AirplaneWindow() {
 }
 
 function WindowSeat({
-  isOpen,
+  open,
   interactive = false,
-  onClick,
+  handlers,
   dist,
 }: {
-  isOpen: boolean
+  open: boolean
   interactive?: boolean
-  onClick?: () => void
+  handlers?: ComponentProps<'button'>
   dist: number
 }) {
-  const Tag = interactive ? m.button : m.div
+  const Tag = (interactive ? 'button' : 'div') as 'button'
   const depth = DEPTH[Math.min(dist, DEPTH.length - 1)]
 
   return (
     <Tag
       type={interactive ? 'button' : undefined}
       aria-label={
-        interactive ? (isOpen ? 'Close the window shade' : 'Open the window shade') : undefined
+        interactive ? (open ? 'Close the window shade' : 'Open the window shade') : undefined
       }
       aria-hidden={interactive ? undefined : true}
       tabIndex={interactive ? undefined : -1}
-      onClick={interactive ? onClick : undefined}
+      {...handlers}
       className={`relative h-[105px] w-[76px] shrink-0 p-[5px] sm:h-[123px] sm:w-[88px] ${
         interactive
-          ? 'cursor-pointer transition-transform active:scale-[0.99]'
+          ? 'cursor-grab touch-none select-none active:cursor-grabbing'
           : VISIBILITY[Math.min(dist, 4)]
       }`}
       style={{
@@ -191,7 +242,7 @@ function WindowSeat({
       {interactive && (
         <span
           className={`absolute top-1 right-2.5 z-20 h-1 w-1 rounded-full transition-[background-color,box-shadow] duration-700 ${
-            isOpen
+            open
               ? 'bg-sky-300 shadow-[0_0_6px_2px_rgba(125,211,252,0.9)]'
               : 'bg-amber-400 shadow-[0_0_6px_2px_rgba(251,191,36,0.8)]'
           }`}
@@ -205,15 +256,12 @@ function WindowSeat({
           boxShadow: 'inset 0 0 0 1.5px rgba(10,14,22,0.75), inset 0 0 26px rgba(6,10,20,0.55)',
         }}
       >
-        {interactive && <Sky isOpen={isOpen} panX={CENTER_PAN} />}
+        {interactive && <Sky panX={CENTER_PAN} />}
 
-        <m.div
-          initial={false}
-          animate={{ y: isOpen ? '-87%' : '0%' }}
-          transition={
-            interactive ? { duration: SHADE_DURATION, ease: 'easeInOut' } : { duration: 0 }
-          }
-          className="group absolute inset-0 z-10 flex flex-col items-center justify-end rounded-b-[9px] pb-[5px]"
+        <div
+          className={`group absolute inset-0 z-10 flex flex-col items-center justify-end rounded-b-[9px] pb-[5px] ${
+            interactive ? 'shade' : ''
+          }`}
           style={{
             background:
               'repeating-linear-gradient(90deg, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 1px, transparent 1px, transparent 4px), linear-gradient(180deg, #eaf0f4 0%, #d3dde4 46%, #b6c3cc 88%, #9fadb7 100%)',
@@ -231,7 +279,7 @@ function WindowSeat({
               }}
             />
           )}
-        </m.div>
+        </div>
 
         <div
           className="pointer-events-none absolute inset-0 z-20 mix-blend-screen"
@@ -245,42 +293,42 @@ function WindowSeat({
   )
 }
 
-function Sky({ isOpen, panX }: { isOpen: boolean; panX: number }) {
+function Sky({ panX }: { panX: number }) {
   return (
     <div className="absolute inset-0">
       <div
-        className="absolute inset-0 transition-opacity duration-[1400ms]"
+        className="absolute inset-0"
         style={{
-          opacity: isOpen ? 1 : 0,
+          opacity: 'var(--lit)',
           background: 'var(--w-day)',
         }}
       />
       <div
-        className="absolute inset-0 transition-opacity duration-[1400ms]"
+        className="absolute inset-0"
         style={{
-          opacity: isOpen ? 0 : 1,
+          opacity: 'calc(1 - var(--lit))',
           background: 'var(--w-night)',
         }}
       />
 
-      <Layer panX={panX} speed="drift-far" opacity={isOpen ? 0 : 0.9}>
+      <Layer panX={panX} speed="drift-far" opacity="calc((1 - var(--lit)) * 0.9)">
         {STARS.map(([x, y, r], i) => (
           <circle key={i} cx={x} cy={y} r={r} fill="#ffffff" />
         ))}
       </Layer>
 
       <div
-        className="absolute inset-x-0 top-[46%] h-[28%] transition-opacity duration-1000"
+        className="absolute inset-x-0 top-[46%] h-[28%]"
         style={{
-          opacity: isOpen ? 1 : 0,
+          opacity: 'var(--lit)',
           background: 'radial-gradient(80% 100% at 30% 60%, var(--w-glow), transparent 72%)',
         }}
       />
 
-      <Cirrus isOpen={isOpen} panX={panX} />
-      <Ridges isOpen={isOpen} panX={panX} />
+      <Cirrus panX={panX} />
+      <Ridges panX={panX} />
 
-      <Wing isOpen={isOpen} />
+      <Wing />
     </div>
   )
 }
@@ -309,12 +357,12 @@ function Layer({
 }: {
   panX: number
   speed: string
-  opacity: number
+  opacity: number | string
   children: ReactNode
 }) {
   return (
     <div
-      className="absolute inset-y-0 overflow-hidden transition-opacity duration-1000"
+      className="absolute inset-y-0 overflow-hidden"
       style={{ left: `${-panX}%`, width: `${SCENE_W * 2}%`, opacity }}
     >
       <svg
@@ -329,28 +377,20 @@ function Layer({
   )
 }
 
-function Ridges({ isOpen, panX }: { isOpen: boolean; panX: number }) {
+function Ridges({ panX }: { panX: number }) {
   return (
     <Layer panX={panX} speed="drift-mid" opacity={1}>
       <path
         d={FAR}
-        className="transition-colors duration-[1400ms]"
-        style={{ fill: isOpen ? 'var(--w-ridge-far)' : 'var(--w-nridge-far)' }}
-        opacity={isOpen ? 0.65 : 0.85}
-      />
-      <path
-        d={NEAR}
-        className="transition-colors duration-[1400ms]"
         style={{
-          fill: isOpen ? 'var(--w-ridge-near)' : 'var(--w-nridge-near)',
+          fill: mix('--w-nridge-far', '--w-ridge-far'),
+          opacity: 'calc(0.85 - var(--lit) * 0.2)',
         }}
       />
+      <path d={NEAR} style={{ fill: mix('--w-nridge-near', '--w-ridge-near') }} />
       <path
         d={HAZE}
-        className="transition-colors duration-[1400ms]"
-        style={{
-          fill: isOpen ? 'var(--w-ridge-haze)' : 'var(--w-nridge-haze)',
-        }}
+        style={{ fill: mix('--w-nridge-haze', '--w-ridge-haze') }}
         opacity="0.55"
       />
     </Layer>
@@ -368,9 +408,9 @@ const CIRRUS: Array<[number, number, number]> = [
   [390, 51, 24],
 ]
 
-function Cirrus({ isOpen, panX }: { isOpen: boolean; panX: number }) {
+function Cirrus({ panX }: { panX: number }) {
   return (
-    <Layer panX={panX} speed="drift-near" opacity={isOpen ? 0.75 : 0.18}>
+    <Layer panX={panX} speed="drift-near" opacity="calc(0.18 + var(--lit) * 0.57)">
       {CIRRUS.map(([x, y, w], i) => (
         <ellipse
           key={i}
@@ -378,53 +418,37 @@ function Cirrus({ isOpen, panX }: { isOpen: boolean; panX: number }) {
           cy={y}
           rx={w}
           ry="1.8"
-          className="transition-colors duration-[1400ms]"
-          style={{ fill: isOpen ? 'var(--w-cirrus)' : 'var(--w-ncirrus)' }}
+          style={{ fill: mix('--w-ncirrus', '--w-cirrus') }}
         />
       ))}
     </Layer>
   )
 }
 
-function Wing({ isOpen }: { isOpen: boolean }) {
+function Wing() {
   return (
     <svg
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
-      className="absolute inset-0 h-full w-full transition-opacity duration-1000"
-      style={{ opacity: isOpen ? 0.95 : 0.5 }}
+      className="absolute inset-0 h-full w-full"
+      style={{ opacity: 'calc(0.5 + var(--lit) * 0.45)' }}
     >
       <defs>
         <linearGradient id="wing" x1="0" y1="1" x2="1" y2="0">
-          <stop
-            offset="0%"
-            style={{
-              stopColor: isOpen ? 'var(--w-wing-1)' : 'var(--w-nwing-1)',
-            }}
-          />
-          <stop
-            offset="60%"
-            style={{
-              stopColor: isOpen ? 'var(--w-wing-2)' : 'var(--w-nwing-2)',
-            }}
-          />
-          <stop
-            offset="100%"
-            style={{
-              stopColor: isOpen ? 'var(--w-wing-3)' : 'var(--w-nwing-3)',
-            }}
-          />
+          <stop offset="0%" style={{ stopColor: mix('--w-nwing-1', '--w-wing-1') }} />
+          <stop offset="60%" style={{ stopColor: mix('--w-nwing-2', '--w-wing-2') }} />
+          <stop offset="100%" style={{ stopColor: mix('--w-nwing-3', '--w-wing-3') }} />
         </linearGradient>
       </defs>
 
       <path d="M36 30 L44 42 L100 100 L100 74 Z" fill="url(#wing)" />
       <path
         d="M36 30 L31 17 L39 20 L44 42 Z"
-        style={{ fill: isOpen ? 'var(--w-fin)' : 'var(--w-nfin)' }}
+        style={{ fill: mix('--w-nfin', '--w-fin') }}
       />
       <path
         d="M36 30 L100 88"
-        style={{ stroke: isOpen ? 'var(--w-strut)' : 'var(--w-nstrut)' }}
+        style={{ stroke: mix('--w-nstrut', '--w-strut') }}
         strokeWidth="0.7"
         opacity="0.65"
       />
@@ -619,6 +643,7 @@ function Party({ at, onDone }: { at: Party; onDone: () => void }) {
     >
       {/* lensed light: the sky behind the hole smeared into a halo */}
       <m.circle
+        r={0}
         fill="none"
         stroke="var(--accent)"
         strokeWidth="0.35"
@@ -661,6 +686,7 @@ function Party({ at, onDone }: { at: Party; onDone: () => void }) {
         {DEBRIS.map((angle, i) => (
           <m.circle
             key={i}
+            r={0}
             fill="var(--accent)"
             animate={{
               cx: [0, 0, Math.cos(angle) * 24, 0],
@@ -679,6 +705,7 @@ function Party({ at, onDone }: { at: Party; onDone: () => void }) {
 
       {/* photon ring — the last light that still gets out */}
       <m.circle
+        r={0}
         fill="none"
         stroke="var(--accent)"
         animate={{
@@ -691,7 +718,8 @@ function Party({ at, onDone }: { at: Party; onDone: () => void }) {
 
       {/* the horizon: nothing comes back out of this bit */}
       <m.circle
-        fill="var(--bg)"
+        r={0}
+        fill="var(--cream)"
         animate={{ r: [0, HORIZON, HORIZON, 0] }}
         transition={{ duration: COLLAPSE, times: [0, OPEN, 0.92, 1], ease: 'easeOut' }}
       />
@@ -838,7 +866,7 @@ function FlightPath() {
                 {/* terminator: the half turned away from the sun */}
                 <path
                   d={`M0 ${-planet.r}A${planet.r} ${planet.r} 0 0 1 0 ${planet.r}Z`}
-                  fill="var(--bg)"
+                  fill="var(--cream)"
                   opacity="0.3"
                 />
               </m.g>

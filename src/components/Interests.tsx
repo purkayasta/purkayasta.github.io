@@ -2,7 +2,6 @@ import { m } from 'framer-motion'
 import { interests } from '../data/portfolio'
 
 const ICONS: Record<string, string> = {
-  Poetry: 'M4 20c6-1 9-4 12-9l2-5-5 2c-5 3-8 6-9 12M9 15l6-6',
   Games:
     'M7 10h10a4 4 0 0 1 4 4v1a3 3 0 0 1-5.5 1.7L14 15h-4l-1.5 1.7A3 3 0 0 1 3 15v-1a4 4 0 0 1 4-4M8 12v3M6.5 13.5h3M15.5 13h.01M17.5 15h.01',
   Movies: 'M3 7h18v12H3zM3 7l3-4M9 7l3-4M15 7l3-4M3 12h18',

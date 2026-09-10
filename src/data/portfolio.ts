@@ -358,7 +358,7 @@ export const writing = [
   },
 ]
 
-export const interests = ['Poetry', 'Games', 'Movies', 'Cosmos']
+export const interests = ['Games', 'Movies', 'Cosmos']
 
 export const contact = {
   email: 'mailto:pritom0purkayasta@gmail.com',
