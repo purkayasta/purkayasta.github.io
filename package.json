@@ -7,10 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test scripts/test.mjs"
   },
   "dependencies": {
-    "framer-motion": "^13.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
@@ -23,6 +23,6 @@
     "oxlint": "^1.79.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
-    "vite": "^8.2.2"
+    "vite": "^8.3.8"
   }
 }
